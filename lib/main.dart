@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'todolist_service.dart';
+//import 'package:geolocator/geolocator.dart';
 
 late SharedPreferences prefs;
 
@@ -51,10 +52,18 @@ class _HomePageState extends State<HomePage> {
       builder: (context, memoService, child) {
         // memoService로 부터 memoList 가져오기
         List<Memo> memoList = memoService.memoList;
-
+// 앱바에 아이콘 만들기 -> 아이콘 누르면 들어가지는 페이지 만들기 -> 페이지 꾸미기 -> 페이지 api받아오기. -> 데이터 구성.
         return Scaffold(
           appBar: AppBar(
             title: Text("To_Do_List"),
+            actions: [
+              IconButton(
+                icon: Icon(Icons.sunny_snowing),
+                onPressed: () {
+                  print("날씨 클릭");
+                },
+              ),
+            ],
           ),
           body: memoList.isEmpty
               ? Center(child: Text("할 일을 작성해 주세요."))
