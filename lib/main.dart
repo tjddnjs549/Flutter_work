@@ -3,10 +3,16 @@
 //import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'todolist_service.dart';
+//import 'package:geolocator/geolocator.dart';
 
-void main() {
+late SharedPreferences prefs;
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  prefs = await SharedPreferences.getInstance();
   runApp(
     MultiProvider(
       providers: [
@@ -46,10 +52,18 @@ class _HomePageState extends State<HomePage> {
       builder: (context, memoService, child) {
         // memoService로 부터 memoList 가져오기
         List<Memo> memoList = memoService.memoList;
-
+// 앱바에 아이콘 만들기 -> 아이콘 누르면 들어가지는 페이지 만들기 -> 페이지 꾸미기 -> 페이지 api받아오기. -> 데이터 구성.
         return Scaffold(
           appBar: AppBar(
             title: Text("To_Do_List"),
+            actions: [
+              IconButton(
+                icon: Icon(Icons.sunny_snowing),
+                onPressed: () {
+                  print("날씨 클릭");
+                },
+              ),
+            ],
           ),
           body: memoList.isEmpty
               ? Center(child: Text("할 일을 작성해 주세요."))
@@ -65,7 +79,7 @@ class _HomePageState extends State<HomePage> {
                             value: memo.checked ?? false,
                             onChanged: (bool? newValue) {
                               setState(() {
-                                memo.checked = newValue ?? false;
+                                memoService.updateCheck(index: index);
                               });
                             },
                           ),
@@ -74,6 +88,11 @@ class _HomePageState extends State<HomePage> {
                             memo.content,
                             maxLines: 3,
                             overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              decoration: memoList[index].checked
+                                  ? TextDecoration.lineThrough
+                                  : null,
+                            ),
                           ),
                           trailing: InkWell(
                             onTap: () async {
@@ -96,9 +115,9 @@ class _HomePageState extends State<HomePage> {
                                   : "Select Date",
                             ),
                           ),
-                          onTap: () {
+                          onTap: () async {
                             // 아이템 클릭시
-                            Navigator.push(
+                            await Navigator.push(
                               context,
                               MaterialPageRoute(
                                 builder: (_) => DetailPage(
@@ -106,6 +125,9 @@ class _HomePageState extends State<HomePage> {
                                 ),
                               ),
                             );
+                            if (memo.content.isEmpty) {
+                              memoService.deleteMemo(index: index);
+                            }
                           },
                         ),
                         Container(
@@ -118,10 +140,10 @@ class _HomePageState extends State<HomePage> {
                 ),
           floatingActionButton: FloatingActionButton(
             child: Icon(Icons.add),
-            onPressed: () {
+            onPressed: () async {
               // + 버튼 클릭시 메모 생성 및 수정 페이지로 이동
               memoService.createMemo(content: '');
-              Navigator.push(
+              await Navigator.push(
                 context,
                 MaterialPageRoute(
                   builder: (_) => DetailPage(
@@ -129,6 +151,9 @@ class _HomePageState extends State<HomePage> {
                   ),
                 ),
               );
+              if (memoList[memoService.memoList.length - 1].content.isEmpty) {
+                memoService.deleteMemo(index: memoList.length - 1);
+              }
             },
           ),
         );
