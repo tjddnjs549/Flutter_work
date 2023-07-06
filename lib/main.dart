@@ -4,6 +4,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:to_do_list/loading.dart';
+import 'package:to_do_list/weatherscreen.dart';
 
 import 'todolist_service.dart';
 //import 'package:geolocator/geolocator.dart';
@@ -31,6 +33,11 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       home: HomePage(),
+      initialRoute: '/',
+      routes: {
+        '/a': (context) => Loading(),
+        '/b': (context) => WeatherScreen(),
+      },
     );
   }
 }
@@ -52,7 +59,6 @@ class _HomePageState extends State<HomePage> {
       builder: (context, memoService, child) {
         // memoService로 부터 memoList 가져오기
         List<Memo> memoList = memoService.memoList;
-// 앱바에 아이콘 만들기 -> 아이콘 누르면 들어가지는 페이지 만들기 -> 페이지 꾸미기 -> 페이지 api받아오기. -> 데이터 구성.
         return Scaffold(
           appBar: AppBar(
             title: Text("To_Do_List"),
@@ -60,7 +66,7 @@ class _HomePageState extends State<HomePage> {
               IconButton(
                 icon: Icon(Icons.sunny_snowing),
                 onPressed: () {
-                  print("날씨 클릭");
+                  Navigator.pushNamed(context, '/a');
                 },
               ),
             ],
