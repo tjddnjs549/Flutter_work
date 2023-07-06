@@ -7,7 +7,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:to_do_list/loading.dart';
 import 'package:to_do_list/weatherscreen.dart';
 
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'todolist_service.dart';
+import 'package:timezone/data/latest_all.dart' as tz;
+import 'package:timezone/timezone.dart' as tz;
 //import 'package:geolocator/geolocator.dart';
 
 late SharedPreferences prefs;
@@ -52,6 +55,91 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   //DateTime date = DateTime.now();
+  FlutterLocalNotificationsPlugin localNotification =
+      FlutterLocalNotificationsPlugin();
+  Future<void> _initLocalNotification() async {
+    FlutterLocalNotificationsPlugin localNotification =
+        FlutterLocalNotificationsPlugin();
+    AndroidInitializationSettings initSettingsAndroid =
+        const AndroidInitializationSettings('@mipmap/ic_launcher');
+    DarwinInitializationSettings initSettingsIOS =
+        const DarwinInitializationSettings(
+      requestSoundPermission: false,
+      requestBadgePermission: false,
+      requestAlertPermission: false,
+    );
+    InitializationSettings initSettings = InitializationSettings(
+      android: initSettingsAndroid,
+      iOS: initSettingsIOS,
+    );
+    await localNotification.initialize(
+      initSettings,
+    );
+  }
+
+  final NotificationDetails _details = const NotificationDetails(
+    android: AndroidNotificationDetails('alarm 1', '1번 푸시'),
+    iOS: DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+    ),
+  );
+  Future<void> showPushAlarm() async {
+    FlutterLocalNotificationsPlugin localNotification =
+        FlutterLocalNotificationsPlugin();
+    await localNotification.show(0, '단일 푸시 알림', '누르자마자 알림이 옵니다.', _details,
+        payload: 'deepLink');
+  }
+
+  tz.TZDateTime _timeZoneSetting({required int seconds, required selectDate}) {
+    tz.initializeTimeZones();
+    tz.setLocalLocation(tz.getLocation('Asia/Seoul'));
+    tz.TZDateTime now = tz.TZDateTime.now(tz.local);
+    tz.TZDateTime diff = tz.TZDateTime(
+      tz.local,
+      selectDate.year,
+      selectDate.month,
+      selectDate.day,
+      now.hour,
+      now.minute,
+      now.second,
+    );
+    Duration difference = diff.difference(now);
+    int diffDays = difference.inDays + 1;
+    tz.TZDateTime scheduledDate = now.add(Duration(days: 0, seconds: seconds));
+    //위 Duration에 diffdays를 넣으면 해당 날짜에 알림이 감
+    return scheduledDate;
+  }
+
+  Future<void> selectedDatePushAlarm(selectDate) async {
+    FlutterLocalNotificationsPlugin localNotification =
+        FlutterLocalNotificationsPlugin();
+    await localNotification.zonedSchedule(
+      1,
+      '로컬 푸시 알림 2',
+      '특정 날짜 / 시간대 전송 알림',
+      _timeZoneSetting(seconds: 2, selectDate: selectDate),
+      _details,
+      uiLocalNotificationDateInterpretation:
+          UILocalNotificationDateInterpretation.absoluteTime,
+      //matchDateTimeComponents: DateTimeComponents.time, 이 코드를 추가하면 매일 정해진시간대에 울려줌
+    );
+  }
+
+  @override
+  void initState() {
+    _initLocalNotification();
+    localNotification
+        .resolvePlatformSpecificImplementation<
+            IOSFlutterLocalNotificationsPlugin>()
+        ?.requestPermissions(
+          alert: true,
+          badge: true,
+          sound: true,
+        );
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -111,6 +199,7 @@ class _HomePageState extends State<HomePage> {
                               if (selectedDate != null) {
                                 setState(() {
                                   memo.date = selectedDate;
+                                  selectedDatePushAlarm(selectedDate);
                                   //date = selectedDate;
                                 });
                               }
